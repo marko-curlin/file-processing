@@ -1,6 +1,7 @@
 from pathlib import Path
 import re
 import os
+from constants import *
 
 
 def getAllSourceFiles(source: str) -> list or None:
@@ -41,3 +42,58 @@ class cd:
 
     def __exit__(self, etype, value, traceback):
         os.chdir(self.savedPath)
+
+
+def parseFile(file, userInputChannel, speedCases):
+    tempParameters = {}
+    tempData = {}
+
+    tempParameters[SPEED] = os.path.basename(file.name).split('_')[4].rstrip('rpm')
+
+    begin = False
+
+    for line in file:
+        if line.startswith('#'):
+            continue
+        elif line.startswith('BEGIN'):
+            begin = True
+        elif line.startswith('END'):
+            if speedCases is None:
+                pass
+            elif tempParameters[SPEED] not in speedCases:
+                return
+            begin = False
+        elif begin:
+            splitLine = line.split(' = ')
+            leftSideAssignment = splitLine[0]
+            if leftSideAssignment == CHANNEL_STRING:
+                allChannels = processMultilineAssignment(line, file)
+                try:
+                    userChannelIndex = findChannel(userInputChannel, allChannels)
+                    crankAngleChannel = findChannel(CRANK_ANGLE, allChannels)
+                except ValueError:
+                    return
+            elif leftSideAssignment == UNIT_STRING:
+                allUnits = processMultilineAssignment(line, file)
+                userUnit = findUnit(userChannelIndex, allUnits)
+                crankAngleUnit = findUnit(crankAngleChannel, allUnits)
+                multiplier = 1000 if userUnit == 'kg' else 1
+            else:
+                tempParameters[leftSideAssignment] = ''.join(splitLine[1:]).rstrip('\n')
+        else:
+            splitLine = line.split()
+            tempData[float(splitLine[crankAngleChannel])] = float(splitLine[userChannelIndex]) * multiplier
+
+    if userUnit == 'kg':
+        userUnit = 'g'
+
+    return tempData, tempParameters, userUnit, crankAngleUnit
+
+
+def processMultilineAssignment(startingLine: str, file):
+    allLines = ''
+    while startingLine.endswith('&\n'):
+        allLines += startingLine.rstrip('&\n')
+        startingLine = next(file)
+    allLines += startingLine.rstrip('\n')
+    return allLines
