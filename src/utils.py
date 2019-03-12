@@ -1,7 +1,7 @@
 from pathlib import Path
 import re
 import os
-from constants import *
+from src.constants import *
 
 
 def get_all_source_files(source: str) -> list or None:

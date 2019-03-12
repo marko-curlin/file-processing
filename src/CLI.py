@@ -1,5 +1,5 @@
-from utils import *
-from solution import sum_and_graph_data
+from src.utils import *
+from src.solution import sum_and_graph_data
 
 
 def command_line_client():

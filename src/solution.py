@@ -1,6 +1,6 @@
 from collections import defaultdict, namedtuple
 import matplotlib.pyplot as plt
-from utils import *
+from src.utils import *
 import sys
 
 
