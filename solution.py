@@ -4,67 +4,67 @@ from utils import *
 import sys
 
 
-def sumAndGraphData(inputFiles, userInputChannel, outputLocation, speedCases):
+def sum_and_graph_data(input_files, user_input_channel, output_location, speed_cases):
+    data_list = []
 
-    dataList = []
-
-    for filePath in inputFiles:
+    for filePath in input_files:
 
         with filePath.open() as file:
 
-            tempData, tempParameters = parseFile(file, userInputChannel, speedCases)
+            temp_data, temp_parameters = parse_file(file, user_input_channel, speed_cases)
 
-            if tempData is not None:
+            if temp_data is not None:
                 newData = namedtuple('Data', 'speed param userChannelData')
-                newData.userChannelData = tempData
-                newData.param = tempParameters
-                newData.speed = tempParameters[SPEED]
-                dataList.append(newData)
+                newData.userChannelData = temp_data
+                newData.param = temp_parameters
+                newData.speed = temp_parameters[SPEED]
+                data_list.append(newData)
 
-    if not dataList:
+    if not data_list:
         sys.exit("No data has been found! Finishing execution of this script!")
 
-    totalAverage = defaultdict(float)
+    total_average = defaultdict(float)
     counter = defaultdict(int)
 
-    for data in dataList:
-        dataDict = data.userChannelData
+    for data in data_list:
+        data_dict = data.userChannelData
 
-        for key, value in dataDict.items():
-            totalAverage[key] += value
+        for key, value in data_dict.items():
+            total_average[key] += value
             counter[key] += 1
 
-    userUnit = dataList[0].param[UNIT_STRING]
-    crankAngleUnit = dataList[0].param[CRANK_ANGLE]
+    user_unit = data_list[0].param[UNIT_STRING]
+    crank_angle_unit = data_list[0].param[CRANK_ANGLE]
 
-    with cd(outputLocation):
+    with cd(output_location):
 
-        with open('total_average_{0}.gid'.format(userInputChannel.replace(':', '-')), 'w', buffering=BUFFER_SIZE) \
-                as outputFile:  # Windows doesn't accept ':' as a part of a file name
+        with open('total_average_{0}.gid'.format(user_input_channel.replace(':', '-')), 'w', buffering=BUFFER_SIZE) \
+                as output_file:  # Windows doesn't accept ':' as a part of a file name
 
-            outputLines = getOutputLines(userInputChannel, userUnit, crankAngleUnit)
-            outputFile.writelines(outputLines)
+            output_lines = get_output_lines(user_input_channel, user_unit, crank_angle_unit)
+            output_file.writelines(output_lines)
 
-            for key, count in counter.items():  # create an average for totalAverage
-                totalAverage[key] /= count
-                outputFile.write('{0} {1}\n'.format(key, totalAverage[key]))
+            for key, count in counter.items():  # create an average for total_average
+                total_average[key] /= count
+                output_file.write('{0} {1}\n'.format(key, total_average[key]))
 
-        for data in dataList:
+        for data in data_list:
             fig, ax = plt.subplots()
             ax.plot(sorted(data.userChannelData.keys()), data.userChannelData.values(),
-                    label='{0} ({1})'.format(userInputChannel, userUnit))
+                    label='{0} ({1})'.format(user_input_channel, user_unit))
 
-            ax.set(xlabel='Crank Angle ({0})'.format(crankAngleUnit),
-                   ylabel='{0} ({1})'.format(userInputChannel, userUnit),
+            ax.set(xlabel='Crank Angle ({0})'.format(crank_angle_unit),
+                   ylabel='{0} ({1})'.format(user_input_channel, user_unit),
                    title='Total @ {0} rpm'.format(data.speed))
             ax.grid()
             ax.legend()
             fig.savefig('{0}rpm_graph.png'.format(data.speed))
 
         fig, ax = plt.subplots()
-        ax.plot(sorted(totalAverage.keys()), totalAverage.values(),
-                label='Average {0} ({1})'.format(userInputChannel, userUnit))
-        ax.set(xlabel='Crank Angle ({0})'.format(crankAngleUnit), ylabel='{0} ({1})'.format(userInputChannel, userUnit),
+        ax.plot(sorted(total_average.keys()), total_average.values(),
+                label='Average {0} ({1})'.format(user_input_channel, user_unit))
+        ax.set(xlabel='Crank Angle ({0})'.format(crank_angle_unit),
+               ylabel='{0} ({1})'.format(user_input_channel, user_unit),
                title='Average Total')
         ax.grid()
         ax.legend()

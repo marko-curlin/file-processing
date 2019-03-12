@@ -1,61 +1,60 @@
 from utils import *
-from solution import sumAndGraphData
+from solution import sum_and_graph_data
 
 
-def commandLineClient():
+def command_line_client():
+    bad_input = True
 
-    badInput = True
-
-    while badInput:
-        userDefinedSource = input('Where is your data stored >> ')
+    while bad_input:
+        user_defined_source = input('Where is your data stored >> ')
         try:
-            inputFiles = getAllSourceFiles(userDefinedSource)
-            if inputFiles is not None:
-                badInput = False
+            input_files = get_all_source_files(user_defined_source)
+            if input_files is not None:
+                bad_input = False
             else:
                 print('The given folder does not exist!')
         except OSError:
             print("Please specify a valid path!")
 
-    userInputChannel = input('Which channel would you like to plot >> ')
+    user_input_channel = input('Which channel would you like to plot >> ')
 
-    badInput = True
+    bad_input = True
 
-    while badInput:
-        changeOutputLocation = input('Do you wish to change the output location '
-                                     '({0}/{1}) >> '.format(POSITIVE_ANSWER, NEGATIVE_ANSWER))
+    while bad_input:
+        change_output_location = input('Do you wish to change the output location '
+                                       '({0}/{1}) >> '.format(POSITIVE_ANSWER, NEGATIVE_ANSWER))
 
-        if changeOutputLocation == POSITIVE_ANSWER:
-            outputLocation = input('Please choose your new location >> ')
+        if change_output_location == POSITIVE_ANSWER:
+            output_location = input('Please choose your new location >> ')
             try:
-                if Path(outputLocation).exists():
-                    badInput = False
+                if Path(output_location).exists():
+                    bad_input = False
                 else:
                     print('The selected output location does not exist!')
             except OSError:
                 print("Please specify a valid path")
-        elif changeOutputLocation == NEGATIVE_ANSWER:
-            outputLocation = os.path.dirname(__file__)
-            badInput = False
+        elif change_output_location == NEGATIVE_ANSWER:
+            output_location = os.path.dirname(__file__)
+            bad_input = False
 
-    badInput = True
+    bad_input = True
 
-    speedCases = None
+    speed_cases = None
 
-    while badInput:
-        changeSpeedCases = input('Would you like to change which speed cases are processed '
-                                 '({0}/{1}) >> '.format(POSITIVE_ANSWER, NEGATIVE_ANSWER))
+    while bad_input:
+        change_speed_cases = input('Would you like to change which speed cases are processed '
+                                   '({0}/{1}) >> '.format(POSITIVE_ANSWER, NEGATIVE_ANSWER))
 
-        if changeSpeedCases == POSITIVE_ANSWER:
-            speedCases = input('Which speed cases would you like to use (ex. 3000 3500 3750) >> ')
-            speedCases = speedCases.split()
-            badInput = False
-        elif changeSpeedCases == NEGATIVE_ANSWER:
-            badInput = False
+        if change_speed_cases == POSITIVE_ANSWER:
+            speed_cases = input('Which speed cases would you like to use (ex. 3000 3500 3750) >> ')
+            speed_cases = speed_cases.split()
+            bad_input = False
+        elif change_speed_cases == NEGATIVE_ANSWER:
+            bad_input = False
 
-    return inputFiles, userInputChannel, outputLocation, speedCases
+    return input_files, user_input_channel, output_location, speed_cases
 
 
 if __name__ == '__main__':
-    args = commandLineClient()
-    sumAndGraphData(*args)
+    args = command_line_client()
+    sum_and_graph_data(*args)
