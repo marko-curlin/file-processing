@@ -4,63 +4,64 @@ import os
 from constants import *
 
 
-def getAllSourceFiles(source: str) -> list or None:
-    sourceDir = Path(source)
+def get_all_source_files(source: str) -> list or None:
+    source_dir = Path(source)
 
-    if not sourceDir.exists():
+    if not source_dir.exists():
         return None
 
-    gidFilesList = []
+    gid_files_list = []
 
-    for dirName, subdirList, fileList in os.walk(sourceDir):
-        for fname in fileList:
+    for dir_name, subdir_list, file_list in os.walk(source_dir):
+        for fname in file_list:
             if fname.split(".")[-1] == "gid":
-                gidFilesList.append(Path(__file__).parent / dirName / fname)
+                gid_files_list.append(Path(__file__).parent / dir_name / fname)
 
-    return gidFilesList
-
-
-def findChannel(searchChannel, allChannels):
-    splitChannels = re.findall(r"'(.*?)'", allChannels)
-    return splitChannels.index(searchChannel)
+    return gid_files_list
 
 
-def findUnit(searchUnit, allUnits):
-    splitUnits = re.findall(r"'(.*?)'", allUnits)
+def find_channel(search_channel, all_channels):
+    split_channels = re.findall(r"'(.*?)'", all_channels)
+    return split_channels.index(search_channel)
+
+
+def find_unit(search_unit, all_units):
+    split_units = re.findall(r"'(.*?)'", all_units)
     try:
-        return splitUnits[searchUnit]
+        return split_units[search_unit]
     except IndexError:
         return None
 
 
-def getOutputLines(userInputChannel, userUnit, crankAngleUnit):
-    return ['BEGIN\n', "{0} = ['{1}', '{2}']\n".format(CHANNEL_STRING, CRANK_ANGLE, userInputChannel),
-                       "{0} = ['{1}', '{2}']\n".format(UNIT_STRING, crankAngleUnit, userUnit), 'END\n']
+def get_output_lines(user_input_channel, user_unit, crank_angle_unit):
+    return ['BEGIN\n', "{0} = ['{1}', '{2}']\n".format(CHANNEL_STRING, CRANK_ANGLE, user_input_channel),
+            "{0} = ['{1}', '{2}']\n".format(UNIT_STRING, crank_angle_unit, user_unit), 'END\n']
 
 
 class cd:
     """Context manager for changing the current working directory"""
-    def __init__(self, newPath):
-        self.newPath = os.path.expanduser(newPath)
+
+    def __init__(self, new_path):
+        self.new_path = os.path.expanduser(new_path)
 
     def __enter__(self):
-        self.savedPath = os.getcwd()
-        os.chdir(self.newPath)
+        self.saved_path = os.getcwd()
+        os.chdir(self.new_path)
 
     def __exit__(self, etype, value, traceback):
-        os.chdir(self.savedPath)
+        os.chdir(self.saved_path)
 
 
-def parseFile(file, userInputChannel, speedCases):
-    noneTuple = (None,)*2
-    tempParameters = {}
-    tempData = {}
+def parse_file(file, user_input_channel, speed_cases):
+    none_tuple = (None,) * 2
+    temp_parameters = {}
+    temp_data = {}
 
-    tempParameters[SPEED] = os.path.basename(file.name).split('_')[4].rstrip('rpm')
+    temp_parameters[SPEED] = os.path.basename(file.name).split('_')[4].rstrip('rpm')
 
     begin = False
 
-    kgMultiplier = 1
+    kg_multiplier = 1
 
     for line in file:
         if line.startswith('#'):
@@ -70,53 +71,53 @@ def parseFile(file, userInputChannel, speedCases):
             begin = True
 
         elif line.startswith('END'):
-            if speedCases is not None and tempParameters[SPEED] not in speedCases:
-                return noneTuple
+            if speed_cases is not None and temp_parameters[SPEED] not in speed_cases:
+                return none_tuple
             begin = False
 
         elif begin:
-            splitLine = line.split(' = ')
-            leftSideAssignment = splitLine[0]
+            split_line = line.split(' = ')
+            left_side_assignment = split_line[0]
 
-            if leftSideAssignment == CHANNEL_STRING:
-                allChannels = processMultilineAssignment(line, file)
+            if left_side_assignment == CHANNEL_STRING:
+                all_channels = process_multiline_assignment(line, file)
 
                 try:
-                    userChannelIndex = findChannel(userInputChannel, allChannels)
-                    crankAngleChannel = findChannel(CRANK_ANGLE, allChannels)
+                    user_channel_index = find_channel(user_input_channel, all_channels)
+                    crank_angle_channel = find_channel(CRANK_ANGLE, all_channels)
                 except ValueError:
-                    return noneTuple
+                    return none_tuple
 
-            elif leftSideAssignment == UNIT_STRING:
-                allUnits = processMultilineAssignment(line, file)
-                userUnit = findUnit(userChannelIndex, allUnits)
-                crankAngleUnit = findUnit(crankAngleChannel, allUnits)
-                if userUnit == KILOGRAM:
-                    kgMultiplier = 1000
+            elif left_side_assignment == UNIT_STRING:
+                all_units = process_multiline_assignment(line, file)
+                user_unit = find_unit(user_channel_index, all_units)
+                crank_angle_unit = find_unit(crank_angle_channel, all_units)
+                if user_unit == KILOGRAM:
+                    kg_multiplier = 1000
 
             else:
-                tempParameters[leftSideAssignment] = ''.join(splitLine[1:]).rstrip('\n')
+                temp_parameters[left_side_assignment] = ''.join(split_line[1:]).rstrip('\n')
 
         else:
-            splitLine = line.split()
-            tempData[float(splitLine[crankAngleChannel])] = float(splitLine[userChannelIndex]) * kgMultiplier
+            split_line = line.split()
+            temp_data[float(split_line[crank_angle_channel])] = float(split_line[user_channel_index]) * kg_multiplier
 
-    if userUnit == KILOGRAM:
-        userUnit = GRAM
+    if user_unit == KILOGRAM:
+        user_unit = GRAM
 
-    tempParameters[UNIT_STRING] = userUnit
-    tempParameters[CRANK_ANGLE] = crankAngleUnit
+    temp_parameters[UNIT_STRING] = user_unit
+    temp_parameters[CRANK_ANGLE] = crank_angle_unit
 
-    return tempData, tempParameters
+    return temp_data, temp_parameters
 
 
-def processMultilineAssignment(startingLine: str, file):
-    allLines = ''
+def process_multiline_assignment(starting_line: str, file):
+    all_lines = ''
 
-    while startingLine.endswith('&\n'):
-        allLines += startingLine.rstrip('&\n')
-        startingLine = next(file)
+    while starting_line.endswith('&\n'):
+        all_lines += starting_line.rstrip('&\n')
+        starting_line = next(file)
 
-    allLines += startingLine.rstrip('\n')
+    all_lines += starting_line.rstrip('\n')
 
-    return allLines
+    return all_lines
